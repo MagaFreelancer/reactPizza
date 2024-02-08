@@ -34,7 +34,7 @@ export default function Home() {
   function onChangePage(n) {
     dispatch(setCurrentPage(n));
   }
-  function fetchPizzas() {
+  async function fetchPizzas() {
     setIsLoading(true);
 
     const sortBy = sort.sortProperty.replace("-", "");
@@ -42,14 +42,16 @@ export default function Home() {
     const category = categoryId > 0 ? `category=${categoryId}` : "";
     const search = searchValue ? `&search=${searchValue}` : "";
 
-    axios
-      .get(
+    try {
+      const response = await axios.get(
         `https://65b2d2a29bfb12f6eafe789c.mockapi.io/Items?page=${currentPage}&limit=8&${category}&sortBy=${sortBy}&order=${order}${search}`
-      )
-      .then((response) => {
-        setItems(response.data);
-        setIsLoading(false);
-      });
+      );
+      setItems(response.data);
+    } catch (err) {
+      console.log(err);
+    } finally {
+      setIsLoading(false);
+    }
 
     window.scrollTo(0, 0);
   }
@@ -71,16 +73,16 @@ export default function Home() {
     isSearch.current = false;
   }, [categoryId, sort.sortProperty, searchValue, currentPage]);
   React.useEffect(() => {
-  if(isMounted.current) {
-    const queryString = qs.stringify({
-      sortProperty: sort.sortProperty,
-      categoryId,
-      currentPage,
-    });
+    if (isMounted.current) {
+      const queryString = qs.stringify({
+        sortProperty: sort.sortProperty,
+        categoryId,
+        currentPage,
+      });
 
-    navigate(`?${queryString}`);
-  }
-  isMounted.current = true
+      navigate(`?${queryString}`);
+    }
+    isMounted.current = true;
   }, [categoryId, sort.sortProperty, currentPage]);
   const pizzas = items.map((obj, index) => <PizzaBlock key={index} {...obj} />);
   const skeltons = [...new Array(6)].map((_, index) => (
